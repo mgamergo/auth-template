@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Auth Template — Next.js + Convex + Clerk
 
-## Getting Started
+Reusable auth starter. Clone → fill envs → build.
 
-First, run the development server:
+## First-time setup (per new project)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+1. Click **"Use this template"** on GitHub → create new repo
+2. Clone locally → `bun install`
+3. **Clerk:** Create new app at clerk.com → copy `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` and `CLERK_SECRET_KEY`
+4. **Convex:** Run `bunx convex dev` → new project auto-created → `NEXT_PUBLIC_CONVEX_URL` auto-added to `.env.local`
+5. **Link Clerk ↔ Convex:**
+   - In Convex dashboard → Settings → Authentication → Add Clerk as JWT provider
+   - In Clerk dashboard → JWT Templates → Create "Convex" template → copy Issuer URL
+   - Add `CLERK_JWT_ISSUER_DOMAIN=<issuer_url>` to `.env.local`
+6. Copy `.env.local.example` → `.env.local` and fill in values
+7. `bun dev` → auth is live ✅
+
+## What's included
+
+- Clerk sign-in / sign-up pages (catch-all routes)
+- Convex user sync on first login (`users` table with Clerk ID index)
+- Protected routes via middleware (everything except `/`, `/sign-in`, `/sign-up`)
+- `useCurrentUser()` hook — returns `{ user, isLoading, isSignedIn }`
+- `UserButton` on dashboard for sign-out
+
+## Using `useCurrentUser` in any component
+
+```tsx
+"use client";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+
+export default function MyComponent() {
+  const { user, isLoading } = useCurrentUser();
+  if (isLoading) return <p>Loading...</p>;
+  return <p>Hello, {user?.name}</p>;
+}
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Adding new protected pages
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
-
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Just create the page under `src/app/`. Middleware auto-protects all non-public routes.
+To add more public routes, edit the `isPublicRoute` matcher in `src/middleware.ts`.
